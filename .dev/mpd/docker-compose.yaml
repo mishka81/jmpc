@@ -1,0 +1,34 @@
+services:
+  mpd:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: jmpc-mpd:latest
+    container_name: jmpc-mpd
+    ports:
+      - "6600:6600"
+      - "8000:8000"  # HTTP streaming port
+    volumes:
+      - ./data/music:/var/lib/mpd/music:ro
+      - ./data/playlists:/var/lib/mpd/playlists
+      - ./data/mpd.conf:/etc/mpd.conf:ro
+    restart: unless-stopped
+    networks:
+      - jmpc-network
+
+  mpc:
+    image: alpine:latest
+    container_name: jmpc-mpc
+    command: sh -c "apk add --no-cache mpc && tail -f /dev/null"
+    environment:
+      - MPD_HOST=mpd
+      - MPD_PORT=6600
+    depends_on:
+      - mpd
+    networks:
+      - jmpc-network
+#    profiles:
+#      - mpc
+
+networks:
+  jmpc-network:
